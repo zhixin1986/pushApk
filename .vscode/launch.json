@@ -1,0 +1,60 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch Package",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Debug Help",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}",
+            "args": ["-h"],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Debug with Sample APK",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}",
+            "args": [
+                "-apk", "/home/zhixin/Downloads/xpInstrument-X3V-debug.apk",
+                "-debug",
+                "-dry-run"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Debug with Input APK",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}",
+            "args": [
+                "-apk", "${input:apkPath}",
+                "-debug",
+                "-dry-run"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}"
+        }
+    ],
+    "inputs": [
+        {
+            "id": "apkPath",
+            "description": "请输入APK文件的完整路径",
+            "default": "/home/zhixin/Downloads/xpInstrument-X3V-debug.apk",
+            "type": "promptString"
+        }
+    ]
+}
