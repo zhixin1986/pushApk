@@ -24,40 +24,41 @@
 ### 1. 克隆项目
 ```bash
 git clone <repository-url>
-cd apk-manager
+cd pushApk
 ```
 
 ### 2. 构建
 ```bash
-go build -o apk-manager .
+go build -o pushApk .
 ```
 
 ### 3. 安装（可选）
 ```bash
 # Linux/macOS
-sudo mv apk-manager /usr/local/bin/
+sudo mv pushApk /usr/local/bin/
 
 # Windows
-# 将apk-manager.exe移动到PATH中的某个目录
+# 将pushApk.exe移动到PATH中的某个目录
 ```
 
 ## 使用方法
 
 ### 基本使用
 ```bash
-apk-manager -apk /path/to/your/app.apk
+pushApk /path/to/your/app.apk
+pushApk -apk /path/to/your/app.apk
 ```
 
 ### 高级选项
 ```bash
 # 详细输出
-apk-manager -apk /path/to/your/app.apk -v
+pushApk -apk /path/to/your/app.apk -v
 
 # 创建备份
-apk-manager -apk /path/to/your/app.apk -backup
+pushApk -apk /path/to/your/app.apk -backup
 
 # 组合使用
-apk-manager -apk /path/to/your/app.apk -backup -v
+pushApk -apk /path/to/your/app.apk -backup -v
 ```
 
 ### 命令行选项
