@@ -1,0 +1,30 @@
+# APK管理工具配置文件
+
+# ADB工具路径（如果不在PATH中）
+adb_path = "adb"
+
+# AAPT工具路径（如果不在PATH中）
+aapt_path = "aapt"
+
+# 临时目录
+temp_dir = "/tmp/apk_manager"
+
+# 是否自动创建备份
+auto_backup = false
+
+# 是否显示详细输出
+verbose = false
+
+# 支持的架构列表（按优先级排序）
+supported_architectures = [
+    "arm64-v8a",
+    "armeabi-v7a",
+    "x86_64",
+    "x86"
+]
+
+# 默认超时时间（秒）
+timeout = 30
+
+# 是否在推送前验证文件完整性
+verify_integrity = true
