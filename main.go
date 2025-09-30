@@ -62,35 +62,12 @@ func main() {
 	if apkPath != "" {
 		pushApk(*manager, apkPath, targetPath, skipSO, debug, dryRun)
 	} else {
-		//获取当前目录下所有APK文件
+		// 获取当前目录
 		cwd, err := os.Getwd()
 		if err != nil {
 			log.Fatalf("获取当前目录失败: %v", err)
 		}
-		files, err := os.ReadDir(cwd)
-		if err != nil {
-			log.Fatalf("读取当前目录失败: %v", err)
-		}
-		apkFiles := []string{}
-		for _, file := range files {
-			if !file.IsDir() && filepath.Ext(file.Name()) == ".apk" {
-				apkFiles = append(apkFiles, filepath.Join(cwd, file.Name()))
-			}
-		}
-		if len(apkFiles) == 0 {
-			log.Fatalf("当前目录下没有找到APK文件")
-		}
-		fmt.Printf("找到 %d 个APK文件:\n", len(apkFiles))
-		for _, apkFile := range apkFiles {
-			fmt.Printf(" - %s\n", apkFile)
-		}
-		if !confirmAction("是否继续推送这些APK文件？") {
-			fmt.Println("操作已取消")
-			return
-		}
-		for _, apkFile := range apkFiles {
-			pushApk(*manager, apkFile, targetPath, skipSO, debug, dryRun)
-		}
+		pushApk(*manager, cwd, targetPath, skipSO, debug, dryRun)
 	}
 	if confirmAction("是否需要重启设备？") {
 		if !dryRun {
@@ -111,6 +88,35 @@ func pushApk(manager APKManager, apkPath, targetPath string, skipSO bool, debug 
 	// 检查APK文件是否存在
 	if _, err := os.Stat(apkPath); os.IsNotExist(err) {
 		log.Fatalf("APK文件不存在: %s", apkPath)
+		return
+	}
+	// 检查是否为目录
+	if info, err := os.Stat(apkPath); err == nil && info.IsDir() {
+		//获取当前目录下所有APK文件
+		files, err := os.ReadDir(apkPath)
+		if err != nil {
+			log.Fatalf("读取当前目录失败: %v", err)
+		}
+		apkFiles := []string{}
+		for _, file := range files {
+			if !file.IsDir() && filepath.Ext(file.Name()) == ".apk" {
+				apkFiles = append(apkFiles, filepath.Join(apkPath, file.Name()))
+			}
+		}
+		if len(apkFiles) == 0 {
+			log.Fatalf("当前目录下没有找到APK文件")
+		}
+		fmt.Printf("找到 %d 个APK文件:\n", len(apkFiles))
+		for _, apkFile := range apkFiles {
+			fmt.Printf(" - %s\n", apkFile)
+		}
+		if !confirmAction("是否继续推送这些APK文件？") {
+			fmt.Println("操作已取消")
+			return
+		}
+		for _, apkFile := range apkFiles {
+			pushApk(manager, apkFile, targetPath, skipSO, debug, dryRun)
+		}
 		return
 	}
 	fmt.Printf("开始处理APK文件: %s\n", apkPath)
