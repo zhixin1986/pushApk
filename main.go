@@ -121,9 +121,14 @@ func main() {
 
 	fmt.Printf("正在推送APK: %s -> %s\n", apkPath, appPath)
 	if !dryRun {
+		err := manager.Remount()
+		if err != nil {
+			fmt.Printf("重新挂载系统分区失败: %v\n", err)
+			return
+		}
 		err = manager.PushAPK(apkPath, appPath)
 		if err != nil {
-			log.Fatalf("推送APK失败: %v", err)
+			fmt.Printf("推送APK失败: %v\n", err)
 		}
 		fmt.Printf("APK推送成功\n")
 	} else {

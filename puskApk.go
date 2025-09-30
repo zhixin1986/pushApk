@@ -65,6 +65,19 @@ func (m *APKManager) GetAppPath(packageName string) (string, error) {
 
 	return "", fmt.Errorf("无法解析应用路径: %s", outputStr)
 }
+func (m *APKManager) Remount() error {
+	cmd := exec.Command(m.adbPath, "root")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("切换到root用户失败: %v, 输出: %s", err, string(output))
+	}
+	cmd = exec.Command(m.adbPath, "remount")
+	output, err = cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("重新挂载系统分区失败: %v, 输出: %s", err, string(output))
+	}
+	return nil
+}
 
 // PushAPK 推送APK到指定位置
 func (m *APKManager) PushAPK(apkPath, targetPath string) error {
@@ -175,8 +188,10 @@ func (m *APKManager) ExtractSOLibraries(apkPath, targetPath string) error {
 
 			// 推送SO文件到设备
 			localPath := filepath.Join(tempDir, soFile)
+			if arch == "arm64_v8a" {
+				arch = "arm64" // 统一处理arm64-v8a为arm
+			}
 			remotePath := filepath.Join(targetPath, "lib", arch, filepath.Base(soFile))
-
 			// 确保远程目录存在
 			remoteDir := filepath.Dir(remotePath)
 
