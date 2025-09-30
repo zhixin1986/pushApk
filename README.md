@@ -45,8 +45,9 @@ sudo mv pushApk /usr/local/bin/
 
 ### 基本使用
 ```bash
-pushApk /path/to/your/app.apk
-pushApk -apk /path/to/your/app.apk
+pushApk //推送当前目录全部apk到设备
+pushApk /path/to/your/app.apk  //推送指定apk到设备
+pushApk -apk /path/to/your/app.apk //推送指定apk到设备
 ```
 
 ### 高级选项

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
 	"log"
@@ -17,7 +18,6 @@ func main() {
 	var dryRun bool
 	var targetPath string
 	var skipSO bool
-
 	flag.StringVar(&apkPath, "apk", "", "APK文件路径")
 	flag.BoolVar(&help, "h", false, "显示帮助信息")
 	flag.BoolVar(&verbose, "v", false, "详细输出")
@@ -30,7 +30,7 @@ func main() {
 	if flag.NArg() > 0 && apkPath == "" {
 		apkPath = flag.Arg(0)
 	}
-	if help || apkPath == "" {
+	if help {
 		showHelp()
 		return
 	}
@@ -51,19 +51,69 @@ func main() {
 
 	// 检查设备连接
 	if err := checkDeviceConnection(); err != nil {
-		log.Fatalf("设备连接检查失败: %v", err)
+		//输入回车退出
+		fmt.Println("设备连接检查失败,按回车键退出...")
+		bufio.NewReader(os.Stdin).ReadBytes('\n')
+		os.Exit(1)
 	}
-
-	// 检查APK文件是否存在
-	if _, err := os.Stat(apkPath); os.IsNotExist(err) {
-		log.Fatalf("APK文件不存在: %s", apkPath)
-	}
-
-	fmt.Printf("开始处理APK文件: %s\n", apkPath)
-
 	// 创建APK管理器
 	manager := NewAPKManager()
 
+	if apkPath != "" {
+		pushApk(*manager, apkPath, targetPath, skipSO, debug, dryRun)
+	} else {
+		//获取当前目录下所有APK文件
+		cwd, err := os.Getwd()
+		if err != nil {
+			log.Fatalf("获取当前目录失败: %v", err)
+		}
+		files, err := os.ReadDir(cwd)
+		if err != nil {
+			log.Fatalf("读取当前目录失败: %v", err)
+		}
+		apkFiles := []string{}
+		for _, file := range files {
+			if !file.IsDir() && filepath.Ext(file.Name()) == ".apk" {
+				apkFiles = append(apkFiles, filepath.Join(cwd, file.Name()))
+			}
+		}
+		if len(apkFiles) == 0 {
+			log.Fatalf("当前目录下没有找到APK文件")
+		}
+		fmt.Printf("找到 %d 个APK文件:\n", len(apkFiles))
+		for _, apkFile := range apkFiles {
+			fmt.Printf(" - %s\n", apkFile)
+		}
+		if !confirmAction("是否继续推送这些APK文件？") {
+			fmt.Println("操作已取消")
+			return
+		}
+		for _, apkFile := range apkFiles {
+			pushApk(*manager, apkFile, targetPath, skipSO, debug, dryRun)
+		}
+	}
+	if confirmAction("是否需要重启设备？") {
+		if !dryRun {
+			err := manager.Reboot()
+			if err != nil {
+				log.Fatalf("重启设备失败: %v", err)
+			}
+		} else {
+			fmt.Println("预览: 将重启设备")
+		}
+	}
+
+}
+func pushApk(manager APKManager, apkPath, targetPath string, skipSO bool, debug bool, dryRun bool) {
+	var appDir string
+	var appPath string
+	var packageName string
+	// 检查APK文件是否存在
+	if _, err := os.Stat(apkPath); os.IsNotExist(err) {
+		log.Fatalf("APK文件不存在: %s", apkPath)
+		return
+	}
+	fmt.Printf("开始处理APK文件: %s\n", apkPath)
 	// 读取APK包名
 	// 获取包名
 	if debug {
@@ -74,24 +124,6 @@ func main() {
 		log.Fatalf("获取包名失败: %v", err)
 	}
 	fmt.Printf("包名: %s\n", packageName)
-
-	// 创建备份（如果需要）
-	if backup {
-		if debug {
-			fmt.Printf("正在创建备份: %s\n", packageName)
-		}
-		if !dryRun {
-			if err := createBackup(packageName); err != nil {
-				log.Printf("备份失败: %v", err)
-			}
-		} else {
-			fmt.Printf("预览: 将创建备份 %s\n", packageName)
-		}
-	}
-
-	// 获取应用在系统中的位置
-	var appDir string
-	var appPath string
 	if targetPath != "" {
 		appDir = targetPath
 		if debug {
@@ -110,15 +142,6 @@ func main() {
 		}
 	}
 	fmt.Printf("目标路径: %s\n", appDir)
-
-	// 确认操作（预览模式跳过）
-	if !dryRun && !confirmAction("确定要继续推送APK和SO库吗？") {
-		fmt.Println("操作已取消")
-		return
-	}
-
-	// 推送APK到对应位置
-
 	fmt.Printf("正在推送APK: %s -> %s\n", apkPath, appPath)
 	if !dryRun {
 		err := manager.Remount()
@@ -160,18 +183,8 @@ func main() {
 	} else {
 		fmt.Println("处理完成!")
 	}
-	if confirmAction("是否需要重启设备？") {
-		if !dryRun {
-			err := manager.Reboot()
-			if err != nil {
-				log.Fatalf("重启设备失败: %v", err)
-			}
-		} else {
-			fmt.Println("预览: 将重启设备")
-		}
-	}
-}
 
+}
 func showHelp() {
 	fmt.Println("APK管理工具")
 	fmt.Println("用法: pushApk [-apk] <APK文件路径> [选项]")
